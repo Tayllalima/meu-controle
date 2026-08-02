@@ -1,7 +1,114 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.json"><title>Meu Controle</title><style>
-:root{--bg:#f5f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--green:#16834b;--red:#c24141;--primary:#111827}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}.app{max-width:920px;margin:auto;padding-bottom:90px}header{padding:18px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;background:#f5f7fbf2;backdrop-filter:blur(10px);z-index:5}h1{margin:0;font-size:24px}.sub{font-size:12px;color:var(--muted)}main{padding:0 18px}.month{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px}.hero{grid-column:1/-1;background:var(--primary);color:#fff}.label{font-size:12px;color:var(--muted)}.hero .label{color:#cbd5e1}.value{font-size:25px;font-weight:800;margin-top:4px}.hero .value{font-size:34px}.green{color:var(--green)}.red{color:var(--red)}.section{font-weight:800;margin:22px 0 9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.btn{border:0;border-radius:13px;padding:12px;font-weight:800;background:var(--primary);color:#fff}.btn.alt{background:#fff;color:var(--text);border:1px solid var(--line)}.list{display:flex;flex-direction:column;gap:8px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;justify-content:space-between;gap:10px}.title{font-weight:750}.meta,.small{font-size:11px;color:var(--muted)}.progress{height:8px;background:#edf0f4;border-radius:20px;overflow:hidden;margin-top:8px}.bar{height:100%;background:#111827}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10}.tabsin{max-width:920px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr)}.tab{border:0;background:none;padding:11px;color:var(--muted);font-size:12px}.tab.active{color:#111827;font-weight:800}.tab b{display:block;font-size:19px}.screen{display:none}.screen.active{display:block}.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:20}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-width:600px;margin:auto;border-radius:22px 22px 0 0;padding:20px;max-height:92vh;overflow:auto}label{display:block;font-size:12px;font-weight:800;margin:11px 0 5px}.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff}.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.empty{text-align:center;padding:25px;color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:12px 0}.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}.authbox{width:100%;max-width:430px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px}.authmsg{margin:10px 0;padding:10px;border-radius:10px;background:#f1f5f9;font-size:12px}.hidden{display:none!important}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.hero{grid-column:span 2}.actions{grid-template-columns:repeat(4,1fr)}.modal{align-items:center}.sheet{border-radius:22px;width:calc(100% - 30px)}}
-</style></head><body>
-<div id="auth" class="auth"><div class="authbox"><h1>Meu Controle</h1><div class="sub">Seu controle financeiro pessoal</div><div id="authmsg" class="authmsg hidden"></div><label>E-mail</label><input id="email" class="field" type="email"><label>Senha</label><input id="password" class="field" type="password"><div class="actions"><button class="btn" id="loginBtn">Entrar</button><button class="btn alt" id="signupBtn">Criar conta</button></div><p class="small">Após criar a conta, confirme o e-mail se o Supabase solicitar.</p></div></div>
-<div id="app" class="app hidden"><header><div><h1>Meu Controle</h1><div class="sub" id="syncStatus">Sincronizado</div></div><div><input id="month" class="month" type="month"><button id="logout" class="btn alt" style="margin-top:5px;width:100%">Sair</button></div></header><main><section id="home" class="screen active"><div id="summary" class="grid"></div><div class="actions"><button class="btn" onclick="expenseModal()">＋ Gasto</button><button class="btn alt" onclick="incomeModal()">＋ Entrada</button><button class="btn alt" onclick="budgetModal()">⚙ Orçamento</button><button class="btn alt" onclick="categoryModal()">＋ Categoria</button></div><div class="section">Orçamento por categoria</div><div id="budgets" class="card"></div><div class="section">Próximas parcelas</div><div id="installments" class="list"></div><div class="section">Últimos lançamentos</div><div id="recent" class="list"></div></section><section id="transactions" class="screen"><div class="section">Lançamentos</div><div class="card"><div class="two"><select id="fcat" class="field"></select><select id="ftype" class="field"><option value="">Todos</option><option value="expense">Gastos</option><option value="income">Entradas</option></select></div></div><div style="height:10px"></div><div id="all" class="list"></div></section><section id="analysis" class="screen"><div class="section">Resumo</div><div id="analysisBox" class="card"></div><div class="section">Por categoria</div><div id="catsBox" class="card"></div></section></main></div>
-<nav id="nav" class="tabs hidden"><div class="tabsin"><button class="tab active" data-s="home"><b>⌂</b>Início</button><button class="tab" data-s="transactions"><b>☷</b>Lançamentos</button><button class="tab" data-s="analysis"><b>◔</b>Análise</button></div></nav><div id="modal" class="modal"><div id="sheet" class="sheet"></div></div>
-<script type="module" src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Meu Controle V3</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="./icon-192.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Meu Controle V3</h1>
+      <div id="syncStatus" class="sync">Offline</div>
+    </div>
+    <button id="logout" class="btn alt hidden">Sair</button>
+  </header>
+
+  <main>
+    <section id="auth" class="auth-card">
+      <h2>Entrar</h2>
+      <p>Acesse sua conta para sincronizar seus dados.</p>
+
+      <label for="email">E-mail</label>
+      <input id="email" class="field" type="email" autocomplete="email">
+
+      <label for="password">Senha</label>
+      <input id="password" class="field" type="password" autocomplete="current-password">
+
+      <div class="actions">
+        <button id="signupBtn" class="btn alt">Criar conta</button>
+        <button id="loginBtn" class="btn">Entrar</button>
+      </div>
+
+      <div id="authmsg" class="message hidden"></div>
+    </section>
+
+    <section id="app" class="hidden">
+      <div class="toolbar">
+        <input id="month" class="field month-field" type="month">
+        <div class="toolbar-actions">
+          <button class="btn" onclick="incomeModal()">+ Entrada</button>
+          <button class="btn danger" onclick="expenseModal()">+ Gasto</button>
+          <button class="btn alt" onclick="budgetModal()">Orçamento</button>
+          <button class="btn alt" onclick="categoryModal()">Categoria</button>
+        </div>
+      </div>
+
+      <section id="dashboard" class="screen active">
+        <div id="summary" class="summary-grid"></div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Orçamento por categoria</h3>
+            <div id="budgets"></div>
+          </div>
+
+          <div class="card">
+            <h3>Lançamentos recentes</h3>
+            <div id="recent"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="transactions" class="screen">
+        <div class="card">
+          <div class="filters">
+            <select id="fcat" class="field">
+              <option value="">Todas as categorias</option>
+            </select>
+
+            <select id="ftype" class="field">
+              <option value="">Todos os tipos</option>
+              <option value="income">Entradas</option>
+              <option value="expense">Gastos</option>
+            </select>
+          </div>
+
+          <div id="all"></div>
+        </div>
+      </section>
+
+      <section id="analysis" class="screen">
+        <div class="grid-2">
+          <div id="analysisBox" class="card"></div>
+          <div class="card">
+            <h3>Gastos por categoria</h3>
+            <div id="catsBox"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="installmentsScreen" class="screen">
+        <div id="installments"></div>
+      </section>
+    </section>
+  </main>
+
+  <nav id="nav" class="bottom-nav hidden">
+    <button class="tab active" data-s="dashboard">Resumo</button>
+    <button class="tab" data-s="transactions">Lançamentos</button>
+    <button class="tab" data-s="analysis">Análise</button>
+    <button class="tab" data-s="installmentsScreen">Parcelas</button>
+  </nav>
+
+  <div id="modal" class="modal">
+    <div id="sheet" class="sheet"></div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
