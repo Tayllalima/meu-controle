@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.json"><title>Meu Controle V2</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--green:#16834b;--red:#c24141;--primary:#111827;--warn:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}.app{max-width:920px;margin:auto;padding-bottom:90px}
+header{padding:20px 18px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;background:#f5f7fbf2;backdrop-filter:blur(10px);z-index:5}
+h1{margin:0;font-size:24px}.sub{font-size:12px;color:var(--muted)}main{padding:0 18px}.month{border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 2px 8px #11182708}.hero{grid-column:1/-1;background:var(--primary);color:#fff}.label{font-size:12px;color:var(--muted)}.hero .label{color:#cbd5e1}.value{font-size:25px;font-weight:800;margin-top:4px}.hero .value{font-size:34px}.green{color:var(--green)}.red{color:var(--red)}.muted{color:var(--muted)}
+.section{font-weight:800;margin:22px 0 9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.btn{border:0;border-radius:13px;padding:12px;font-weight:800;background:var(--primary);color:#fff}.btn.alt{background:#fff;color:var(--text);border:1px solid var(--line)}
+.list{display:flex;flex-direction:column;gap:8px}.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;justify-content:space-between;gap:10px}.title{font-weight:750}.meta{font-size:11px;color:var(--muted);margin-top:3px}.progress{height:8px;background:#edf0f4;border-radius:20px;overflow:hidden;margin-top:8px}.bar{height:100%;background:#111827}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:10}.tabsin{max-width:920px;margin:auto;display:grid;grid-template-columns:repeat(3,1fr)}.tab{border:0;background:none;padding:11px;color:var(--muted);font-size:12px}.tab.active{color:#111827;font-weight:800}.tab b{display:block;font-size:19px}.screen{display:none}.screen.active{display:block}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:20}.modal.open{display:flex}.sheet{background:#fff;width:100%;max-width:600px;margin:auto;border-radius:22px 22px 0 0;padding:20px;max-height:92vh;overflow:auto}label{display:block;font-size:12px;font-weight:800;margin:11px 0 5px}.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff}.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.small{font-size:11px;color:var(--muted)}.pill{font-size:10px;padding:4px 7px;border-radius:999px;background:#eef1f4}.empty{text-align:center;padding:25px;color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.hero{grid-column:span 2}.actions{grid-template-columns:repeat(4,1fr)}.modal{align-items:center}.sheet{border-radius:22px;width:calc(100% - 30px)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><h1>Meu Controle</h1><div class="sub" id="syncStatus">V2 · dados locais</div></div><input id="month" class="month" type="month"></header>
+<main>
+<section id="home" class="screen active">
+<div id="summary" class="grid"></div>
+<div class="actions"><button class="btn" onclick="expenseModal()">＋ Gasto</button><button class="btn alt" onclick="incomeModal()">＋ Entrada</button><button class="btn alt" onclick="budgetModal()">⚙ Orçamento</button><button class="btn alt" onclick="categoryModal()">＋ Categoria</button></div>
+<div class="section">Orçamento por categoria</div><div id="budgets" class="card"></div>
+<div class="section">Próximas parcelas</div><div id="installments" class="list"></div>
+<div class="section">Últimos lançamentos</div><div id="recent" class="list"></div>
+</section>
+<section id="transactions" class="screen"><div class="section">Lançamentos</div><div class="card"><div class="two"><select id="fcat" class="field"></select><select id="ftype" class="field"><option value="">Todos</option><option value="expense">Gastos</option><option value="income">Entradas</option></select></div></div><div style="height:10px"></div><div id="all" class="list"></div></section>
+<section id="analysis" class="screen"><div class="section">Resumo</div><div id="analysisBox" class="card"></div><div class="section">Por categoria</div><div id="catsBox" class="card"></div></section>
+</main></div>
+<nav class="tabs"><div class="tabsin"><button class="tab active" data-s="home"><b>⌂</b>Início</button><button class="tab" data-s="transactions"><b>☷</b>Lançamentos</button><button class="tab" data-s="analysis"><b>◔</b>Análise</button></div></nav>
+<div id="modal" class="modal"><div id="sheet" class="sheet"></div></div>
+<script>
+const K='meu_controle_v2_local';
+const defaults=[['Moradia','🏠'],['Mercado','🛒'],['Transporte','🚗'],['Contas','💡'],['Lazer','🎉'],['Saúde','💊'],['Pets','🐾'],['Compras','🛍️'],['Assinaturas','📺'],['Outros','📦']];
+let db=JSON.parse(localStorage.getItem(K)||'null')||{categories:defaults.map((x,i)=>({id:''+(i+1),name:x[0],icon:x[1]})),transactions:[],budgets:{},goals:[]};
+let M=new Date().toISOString().slice(0,7);
+const save=()=>localStorage.setItem(K,JSON.stringify(db)), money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const cats=()=>db.categories, tx=()=>db.transactions.filter(x=>x.date.startsWith(M));
+const spent=c=>tx().filter(x=>x.type==='expense'&&x.categoryId===c).reduce((a,x)=>a+x.amount,0);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const close=()=>document.getElementById('modal').classList.remove('open');
+function render(){
+ document.getElementById('month').value=M;
+ let a=tx(), out=a.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0), inc=a.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0);
+ let budget=Object.values(db.budgets[M]||{}).reduce((s,x)=>s+Number(x||0),0);
+ document.getElementById('summary').innerHTML=`<div class="card hero"><div class="label">Disponível do orçamento</div><div class="value">${money(budget-out)}</div><div class="small" style="color:#cbd5e1">${M}</div></div><div class="card"><div class="label">Entradas</div><div class="value green">${money(inc)}</div></div><div class="card"><div class="label">Gastos</div><div class="value red">${money(out)}</div></div><div class="card"><div class="label">Orçamento</div><div class="value">${money(budget)}</div></div><div class="card"><div class="label">Resultado</div><div class="value">${money(inc-out)}</div></div>`;
+ renderBudgets();renderInstallments();renderRecent();renderAll();renderAnalysis();filters();
+}
+function renderBudgets(){let b=db.budgets[M]||{};document.getElementById('budgets').innerHTML=cats().map(c=>{let lim=Number(b[c.id]||0),v=spent(c.id),p=lim?Math.min(100,v/lim*100):0;return `<div style="margin-bottom:14px"><div class="row"><span>${c.icon} ${esc(c.name)}</span><span class="small">${money(v)} / ${lim?money(lim):'sem limite'}</span></div>${lim?`<div class="progress"><div class="bar" style="width:${p}%"></div></div>`:''}</div>`}).join('')}
+function item(x){let c=cats().find(c=>c.id===x.categoryId);let sign=x.type==='expense'?'-':'+';return `<div class="item"><div><div class="title">${c?.icon||'•'} ${esc(x.description)}</div><div class="meta">${new Date(x.date+'T12:00').toLocaleDateString('pt-BR')} · ${c?.name||'Sem categoria'} ${x.installments>1?`· ${x.current}/${x.installments}`:''}</div></div><div style="text-align:right"><b class="${x.type==='expense'?'red':'green'}">${sign} ${money(x.amount)}</b><br><button class="small" onclick="del('${x.id}')">excluir</button></div></div>`}
+function renderRecent(){document.getElementById('recent').innerHTML=tx().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(item).join('')||'<div class="empty">Nenhum lançamento.</div>'}
+function renderAll(){let a=tx(),fc=document.getElementById('fcat').value,ft=document.getElementById('ftype').value;if(fc)a=a.filter(x=>x.categoryId===fc);if(ft)a=a.filter(x=>x.type===ft);a.sort((x,y)=>y.date.localeCompare(x.date));document.getElementById('all').innerHTML=a.map(item).join('')||'<div class="empty">Nenhum lançamento encontrado.</div>'}
+function renderInstallments(){let future=db.transactions.filter(x=>x.type==='expense'&&x.installments>1&&x.date>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);document.getElementById('installments').innerHTML=future.map(x=>item(x)).join('')||'<div class="card empty">Nenhuma parcela futura cadastrada.</div>'}
+function renderAnalysis(){let a=tx(),out=a.filter(x=>x.type==='expense').reduce((s,x)=>s+x.amount,0),inc=a.filter(x=>x.type==='income').reduce((s,x)=>s+x.amount,0),b=Object.values(db.budgets[M]||{}).reduce((s,x)=>s+Number(x||0),0);document.getElementById('analysisBox').innerHTML=`<div class="row"><span>Entradas</span><b class="green">${money(inc)}</b></div><hr><div class="row"><span>Gastos</span><b class="red">${money(out)}</b></div><hr><div class="row"><span>Resultado</span><b>${money(inc-out)}</b></div><hr><div class="row"><span>Orçamento</span><b>${money(b)}</b></div>`;let rows=cats().map(c=>({c,v:spent(c.id)})).filter(x=>x.v).sort((a,b)=>b.v-a.v);document.getElementById('catsBox').innerHTML=rows.map(x=>`<div class="row" style="padding:8px 0"><span>${x.c.icon} ${x.c.name}</span><b>${money(x.v)}</b></div>`).join('')||'<div class="empty">Sem dados.</div>'}
+function filters(){let s=document.getElementById('fcat'),v=s.value;s.innerHTML='<option value="">Todas as categorias</option>'+cats().map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');s.value=v}
+function form(type){document.getElementById('modal').classList.add('open');document.getElementById('sheet').innerHTML=`<h2>${type==='expense'?'Novo gasto':'Nova entrada'}</h2><label>Descrição</label><input id="desc" class="field" placeholder="Ex.: supermercado"><label>Valor da ${type==='expense'?'parcela/gasto':'entrada'}</label><input id="amount" class="field" type="number" step=".01" inputmode="decimal"><label>Data</label><input id="date" class="field" type="date" value="${new Date().toISOString().slice(0,10)}"><label>Categoria</label><select id="cat" class="field">${cats().map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>${type==='expense'?'<label>Parcelas</label><select id="inst" class="field">'+Array.from({length:24},(_,i)=>`<option value="${i+1}">${i+1===1?'À vista':i+1+'x'}</option>`).join('')+'</select><div class="small">O valor informado é o valor de cada parcela.</div>':''}<div class="actions"><button class="btn alt" onclick="close()">Cancelar</button><button class="btn" onclick="saveTx('${type}')">Salvar</button></div>`}
+const expenseModal=()=>form('expense'),incomeModal=()=>form('income');
+function saveTx(type){let d=document.getElementById('desc').value.trim(),v=Number(document.getElementById('amount').value),date=document.getElementById('date').value,cat=document.getElementById('cat').value,inst=type==='expense'?Number(document.getElementById('inst').value):1;if(!d||!v||!date)return alert('Preencha os campos obrigatórios.');let base=new Date(date+'T12:00');for(let i=0;i<inst;i++){let dt=new Date(base);dt.setMonth(dt.getMonth()+i);db.transactions.push({id:crypto.randomUUID(),description:d,amount:v,date:dt.toISOString().slice(0,10),type,categoryId:cat,installments:inst,current:i+1});}save();close();M=date.slice(0,7);render()}
+function del(id){if(confirm('Excluir este lançamento?')){db.transactions=db.transactions.filter(x=>x.id!==id);save();render()}}
+function budgetModal(){document.getElementById('modal').classList.add('open');let b=db.budgets[M]||{};document.getElementById('sheet').innerHTML=`<h2>Orçamento mensal</h2><div class="small">Defina o limite de cada categoria para ${M}.</div>${cats().map(c=>`<label>${c.icon} ${c.name}</label><input data-id="${c.id}" class="field bi" type="number" step=".01" value="${b[c.id]||''}" placeholder="0,00">`).join('')}<div class="actions"><button class="btn alt" onclick="close()">Cancelar</button><button class="btn" onclick="saveBudget()">Salvar</button></div>`}
+function saveBudget(){db.budgets[M]={};document.querySelectorAll('.bi').forEach(x=>db.budgets[M][x.dataset.id]=Number(x.value||0));save();close();render()}
+function categoryModal(){document.getElementById('modal').classList.add('open');document.getElementById('sheet').innerHTML='<h2>Nova categoria</h2><label>Nome</label><input id="cn" class="field" placeholder="Ex.: Educação"><label>Ícone</label><input id="ci" class="field" value="📌" maxlength="2"><div class="actions"><button class="btn alt" onclick="close()">Cancelar</button><button class="btn" onclick="saveCat()">Adicionar</button></div>'}
+function saveCat(){let n=document.getElementById('cn').value.trim(),i=document.getElementById('ci').value||'📌';if(!n)return alert('Digite o nome.');db.categories.push({id:crypto.randomUUID(),name:n,icon:i});save();close();render()}
+document.getElementById('month').onchange=e=>{M=e.target.value;render()};document.getElementById('fcat').onchange=renderAll;document.getElementById('ftype').onchange=renderAll;document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')close()};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(t.dataset.s).classList.add('active');render()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');
+render();
+</script>
+</body></html>
